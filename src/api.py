@@ -167,6 +167,7 @@ from src.drift_logger import DriftLogger
 from src.shap_logger import ShapLogger
 
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # =========================================================
 # App
@@ -180,9 +181,14 @@ app = FastAPI(
     ),
 )
 
+# CORS: read allowed origins from env (comma-separated), fallback to localhost
+_default_origins = "http://localhost:5173,http://localhost:3000"
+_cors_origins = os.getenv("CORS_ORIGINS", _default_origins)
+ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

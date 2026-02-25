@@ -22,9 +22,11 @@ RUN pip install --no-cache-dir -r requirements-backend.txt
 
 # Copy source
 COPY src /app/src
-COPY configs /app/configs
 COPY data /app/data
 COPY models /app/models
+
+# Create configs dir (empty in repo) and ensure drift log exists
+RUN mkdir -p /app/configs && touch /app/drift_events.csv
 
 EXPOSE 8000
 

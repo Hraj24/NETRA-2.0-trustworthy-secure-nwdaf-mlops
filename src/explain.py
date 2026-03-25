@@ -1,32 +1,13 @@
-# import pandas as pd
-# import shap
-# from models import build_rf
+"""
+SHAP Explainability Module for NETRA 1.0 - IMT-2030
 
-# def train_and_explain():
-#     df = pd.read_csv("data/traffic_synthetic.csv")
-#     X = df.drop(columns=["future_load"])
-#     y = df["future_load"]
+Generates SHAP-based explanations for IMT-2030 traffic predictions.
+Produces global summary plots and local bar charts for model interpretability.
 
-#     model = build_rf()
-#     model.fit(X, y)
-
-#     explainer = shap.TreeExplainer(model)
-#     shap_values = explainer.shap_values(X.sample(100, random_state=42))
-
-#     shap.summary_plot(shap_values, X.sample(100, random_state=42), show=False)
-#     # Save figure instead of showing
-#     import matplotlib.pyplot as plt
-#     plt.tight_layout()
-#     plt.savefig("reports/shap_summary.png")
-
-# if __name__ == "__main__":
-#     train_and_explain()
-
-
-
-
-
-
+Citations:
+- ITU-R M.2160: "Framework and overall objectives of the future development of IMT
+  for 2030 and beyond" (September 2023)
+"""
 
 import pandas as pd
 import numpy as np
@@ -34,109 +15,156 @@ import shap
 import joblib
 import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import LabelEncoder
 
-# ----------------------------------------
-# Load FL Global Model
-# ----------------------------------------
-model_data = joblib.load("models/fl_global_model.pkl")
 
-model = SGDRegressor()
-model.coef_ = np.array(model_data["coef"])
-model.intercept_ = np.array(model_data["intercept"])
-
-# ----------------------------------------
-# Load public / synthetic data
-# ----------------------------------------
-df = pd.read_csv("data/traffic_synthetic.csv")
-
-SLICE_MAP = {"eMBB": 0, "URLLC": 1, "mMTC": 2}
-if "slice_type" in df.columns:
-    df["slice_type"] = df["slice_type"].map(SLICE_MAP)
-
-# ----------------------------------------
-# Prepare features
-# ----------------------------------------
-X = df.drop(columns=["future_load"]).values
-
-# Add placeholder for model compatibility
-X_full = np.hstack([X, np.zeros((X.shape[0], 1))])
-
-# ❗ REMOVE placeholder for SHAP (zero variance)
-X_shap = X_full[:, :-1]
-
-feature_names = [
+# IMT-2030 feature columns
+IMT2030_FEATURE_COLS = [
     "time_of_day",
-    "slice_type",
-    "jitter",
-    "packet_loss",
-    "throughput",
+    "usage_scenario",
+    "throughput_mbps",
+    "latency_ms",
+    "jitter_ms",
+    "packet_loss_rate",
+    "reliability_target",
+    "connection_density_km2",
+    "mobility_kmph",
+    "area_traffic_capacity_score",
+    "ai_load_score",
+    "resilience_score",
 ]
 
-# ----------------------------------------
-# SHAP Linear Explainer (NEW API)
-# ----------------------------------------
-masker = shap.maskers.Independent(X_full)
 
-explainer = shap.LinearExplainer(
-    model,
-    masker
-)
-
-shap_values_full = explainer.shap_values(X_full[:100])
-
-# Drop placeholder feature
-shap_values = shap_values_full[:, :-1]
-X_plot = X_full[:100, :-1]
-
-X_plot = X_shap[:100]
-
-# ----------------------------------------
-# Global Explanation
-# ----------------------------------------
-shap.summary_plot(
-    shap_values,
-    X_plot,
-    feature_names=feature_names,
-    show=False
-)
-
-plt.tight_layout()
-plt.savefig("reports/shap_summary_fl.png", dpi=300)
-plt.close()
-
-# # ----------------------------------------
-# # Local Explanation (single instance)
-# # ----------------------------------------
-# shap.force_plot(
-#     explainer.expected_value,
-#     shap_values[0],
-#     X_plot[0],
-#     feature_names=feature_names,
-#     matplotlib=True
-# )
-
-# plt.savefig("reports/shap_force_fl.png", dpi=300)
-# plt.close()
-
-# print("✅ SHAP explanations generated successfully (no NaNs)")
+def load_imt2030_model():
+    """Load the FL global model from disk."""
+    model_data = joblib.load("models/fl_global_model.pkl")
+    model = SGDRegressor()
+    model.coef_ = np.array(model_data["coef"])
+    model.intercept_ = np.array(model_data["intercept"])
+    return model
 
 
-# ----------------------------------------
-# Local explanation (BAR plot – stable)
-# ----------------------------------------
-shap.plots.bar(
-    shap.Explanation(
-        values=shap_values[0],
-        base_values=explainer.expected_value,
-        data=X_plot[0],
+def prepare_data():
+    """Load and prepare IMT-2030 dataset for SHAP analysis."""
+    df = pd.read_csv("data/traffic_synthetic.csv")
+
+    # Encode categorical columns
+    if "usage_scenario" in df.columns:
+        le = LabelEncoder()
+        df["usage_scenario"] = le.fit_transform(df["usage_scenario"])
+
+    return df
+
+
+def generate_shap_explanations(n_samples=100, seed=42):
+    """
+    Generate SHAP explanations for IMT-2030 model.
+
+    Args:
+        n_samples: Number of samples for SHAP analysis
+        seed: Random seed for reproducibility
+
+    Returns:
+        Tuple of (shap_values, data, feature_names)
+    """
+    # Load model and data
+    model = load_imt2030_model()
+    df = prepare_data()
+
+    # Prepare features
+    X = df[IMT2030_FEATURE_COLS].values
+
+    # Create background data for masker
+    background = np.zeros((50, len(IMT2030_FEATURE_COLS)))
+    masker = shap.maskers.Independent(background)
+
+    # Create SHAP explainer
+    explainer = shap.LinearExplainer(model, masker)
+
+    # Compute SHAP values for sample
+    X_sample = X[:n_samples]
+    shap_values = explainer.shap_values(X_sample)
+
+    return shap_values, X_sample, IMT2030_FEATURE_COLS
+
+
+def plot_global_summary(shap_values, X, feature_names, output_path="reports/shap_summary_fl.png"):
+    """
+    Generate global SHAP summary plot.
+
+    Args:
+        shap_values: SHAP values array
+        X: Feature data
+        feature_names: List of feature names
+        output_path: Path to save plot
+    """
+    plt.figure(figsize=(10, 6))
+    shap.summary_plot(
+        shap_values,
+        X,
         feature_names=feature_names,
-    ),
-    show=False
-)
+        show=False,
+        color=plt.cm.viridis,
+    )
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300)
+    plt.close()
+    print(f"Saved global summary: {output_path}")
 
-plt.tight_layout()
-plt.savefig("reports/shap_local_bar_fl.png", dpi=300)
-plt.close()
-print("✅ SHAP explanations generated successfully (no NaNs)")
+
+def plot_local_bar(shap_values, X, feature_names, sample_idx=0, output_path="reports/shap_local_bar_fl.png"):
+    """
+    Generate local SHAP bar plot for a single sample.
+
+    Args:
+        shap_values: SHAP values array
+        X: Feature data
+        feature_names: List of feature names
+        sample_idx: Index of sample to explain
+        output_path: Path to save plot
+    """
+    plt.figure(figsize=(8, 6))
+    shap.plots.bar(
+        shap.Explanation(
+            values=shap_values[sample_idx],
+            base_values=shap_values[sample_idx].sum(),  # Linear explainer
+            data=X[sample_idx],
+            feature_names=feature_names,
+        ),
+        show=False
+    )
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300)
+    plt.close()
+    print(f"Saved local bar chart: {output_path}")
 
 
+def main():
+    """Main SHAP explanation pipeline."""
+    print("=" * 60)
+    print("NETRA 1.0 - SHAP Explainability (IMT-2030)")
+    print("=" * 60)
+
+    # Generate SHAP values
+    print("Computing SHAP values...")
+    shap_values, X, feature_names = generate_shap_explanations(n_samples=100)
+
+    # Ensure reports directory exists
+    import os
+    os.makedirs("reports", exist_ok=True)
+
+    # Generate global summary
+    print("Generating global summary plot...")
+    plot_global_summary(shap_values, X, feature_names)
+
+    # Generate local bar chart
+    print("Generating local bar chart...")
+    plot_local_bar(shap_values, X, feature_names)
+
+    print("\n[OK] SHAP explanations generated successfully!")
+    print("  - reports/shap_summary_fl.png: Global feature importance")
+    print("  - reports/shap_local_bar_fl.png: Local explanation sample")
+
+
+if __name__ == "__main__":
+    main()

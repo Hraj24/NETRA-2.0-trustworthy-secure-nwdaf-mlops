@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">🛡️ NETRA 1.0</h1>
+  <h1 align="center">🛡️ NETRA 2.0</h1>
   <p align="center"><strong>Trustworthy & Secure NWDAF MLOps Platform</strong></p>
   <p align="center">
     <strong>6G IMT-2030 Compliant</strong> · Federated Learning · Hybrid Drift Detection · SHAP Explainability · Auto-Rollback & Recovery
@@ -33,7 +33,7 @@
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    NETRA 1.0 Platform                    │
+│                    NETRA 2.0 Platform                    │
 ├────────────────────────┬─────────────────────────────────┤
 │   React Dashboard      │     FastAPI Backend             │
 │   (Port 3000)          │     (Port 8000)                 │
@@ -67,7 +67,7 @@
 ## 📂 Project Structure
 
 ```
-NETRA-1.0/
+NETRA-2.0/
 ├── src/                          # Python backend source (IMT-2030)
 │   ├── api.py                    # FastAPI app — /predict, /explain, /health
 │   ├── data_pipeline.py          # IMT-2030 data generation & validation
@@ -135,8 +135,8 @@ NETRA-1.0/
 
 ```bash
 # Clone the repository
-git clone https://github.com/Hraj24/NETRA-1.0-trustworthy-secure-nwdaf-mlops.git
-cd NETRA-1.0-trustworthy-secure-nwdaf-mlops
+git clone https://github.com/Hraj24/NETRA-2.0-trustworthy-secure-nwdaf-mlops.git
+cd NETRA-2.0-trustworthy-secure-nwdaf-mlops
 
 # Build and start all services
 docker compose up --build -d
@@ -350,7 +350,7 @@ Pre-generated SHAP analysis visualizations are available in the `reports/` direc
 
 ## 📜 License
 
-This project is developed as part of academic research on trustworthy AI/ML operations in 5G/6G network analytics.
+This project is developed as part of academic research on trustworthy AI/ML operations in 6G network analytics.
 
 **Standards Compliance:**
 - ITU-R Recommendation M.2160 (September 2023)
@@ -359,5 +359,5 @@ This project is developed as part of academic research on trustworthy AI/ML oper
 ---
 
 <p align="center">
-  Built with ❤️ for trustworthy 5G/6G network intelligence
+  Built with ❤️ for trustworthy 6G network intelligence
 </p>

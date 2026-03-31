@@ -1,15 +1,127 @@
-// NETRA 1.0 | IMT-2030 Compliant 6G NWDAF Dashboard
+// NETRA 2.0 | IMT-2030 Compliant 6G NWDAF Dashboard
 // Citation: ITU-R M.2160 / IMT-2030 Framework
 
 import React from "react";
 import CountUp from "react-countup";
 import {
-  RadialBarChart,
-  RadialBar,
   ResponsiveContainer,
   LineChart,
   Line,
 } from "recharts";
+
+// ─── Custom SVG Semi-Circle Gauge ───
+// Two arcs forming one continuous 180° semicircle:
+//   • Filled arc (color): sweeps left → value
+//   • Remaining arc (grey): sweeps value → right
+function SemiCircleGauge({ percentage, color, label }) {
+  const width = 240;
+  const height = 140;
+  const strokeWidth = 16;
+  const cx = width / 2;
+  const cy = height - 18;
+  const radius = (width - strokeWidth - 16) / 2;
+
+  const pct = Math.min(100, Math.max(0, percentage));
+
+  // Convert angle (0°=right, 180°=left in math coords) to SVG pixel coords
+  const toXY = (deg) => ({
+    x: cx + radius * Math.cos((deg * Math.PI) / 180),
+    y: cy - radius * Math.sin((deg * Math.PI) / 180),
+  });
+
+  // Angles: 180° = leftmost (0%), 0° = rightmost (100%)
+  const valueDeg = 180 - (pct / 100) * 180; // meeting point angle
+  const left = toXY(180);
+  const right = toXY(0);
+  const mid = toXY(valueDeg);
+
+  // SVG arc: sweep-flag=1 means clockwise in SVG coords
+  // Going from left(180°) to right(0°) clockwise = through the top = semicircle shape
+  const makeArc = (from, to, angleDiff) => {
+    const large = angleDiff > 180 ? 1 : 0;
+    return `M ${from.x} ${from.y} A ${radius} ${radius} 0 ${large} 1 ${to.x} ${to.y}`;
+  };
+
+  // Filled arc: left → meeting point (clockwise through top)
+  const filledAngleDiff = 180 - valueDeg; // how many degrees the fill covers
+  const filledPath = pct > 0.2 ? makeArc(left, mid, filledAngleDiff) : null;
+
+  // Remaining arc: meeting point → right (clockwise continues through top)
+  const remainAngleDiff = valueDeg; // remaining degrees to right
+  const remainPath = pct < 99.8 ? makeArc(mid, right, remainAngleDiff) : null;
+
+  return (
+    <div className="gauge-container">
+      <svg
+        width="100%"
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* Remaining arc (grey): meeting point → right end */}
+        {remainPath && (
+          <path
+            d={remainPath}
+            fill="none"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+        )}
+
+        {/* Filled arc (color): left end → meeting point */}
+        {filledPath && (
+          <path
+            d={filledPath}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            style={{
+              filter: `drop-shadow(0 0 8px ${color}50)`,
+            }}
+          />
+        )}
+
+        {/* Full empty state */}
+        {pct <= 0.2 && (
+          <path
+            d={makeArc(left, right, 180)}
+            fill="none"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+        )}
+
+        {/* 0% label at left endpoint */}
+        <text
+          x={left.x}
+          y={left.y + 20}
+          textAnchor="middle"
+          fill="var(--text-muted)"
+          fontSize="11"
+          fontFamily="var(--font-mono)"
+        >
+          0%
+        </text>
+        {/* 100% label at right endpoint */}
+        <text
+          x={right.x}
+          y={right.y + 20}
+          textAnchor="middle"
+          fill="var(--text-muted)"
+          fontSize="11"
+          fontFamily="var(--font-mono)"
+        >
+          100%
+        </text>
+      </svg>
+      <div className="gauge-value-label" style={{ color }}>
+        {label}
+      </div>
+    </div>
+  );
+}
 
 // ─── Scenario Colors ───
 const SCENARIO_COLORS = {
@@ -33,8 +145,9 @@ function getShapVariance(shap) {
 function getConfidence(variance, load) {
   if (variance === null || variance === undefined) return "Low";
   // Confidence based on SHAP variance magnitude (lower variance = higher confidence)
-  if (variance < 0.5) return "High";
-  if (variance < 2.0) return "Medium";
+  // Typical SHAP variance ranges from 100-1000+
+  if (variance < 300) return "High";
+  if (variance < 800) return "Medium";
   return "Low";
 }
 
@@ -74,6 +187,7 @@ export default function PredictionPanel({
 }) {
   const [prevLoad, setPrevLoad] = React.useState(0);
 
+  // Hook 1: Track previous load for CountUp animation
   React.useEffect(() => {
     if (result?.predicted_future_load != null) {
       setPrevLoad((prev) =>
@@ -81,6 +195,22 @@ export default function PredictionPanel({
       );
     }
   }, [result]);
+
+  // Hook 2: Debug logging (only when result exists)
+  React.useEffect(() => {
+    if (result) {
+      const load = result.predicted_future_load ?? 0;
+      const gaugeMax = 10000;
+      const gaugePct = Math.min(100, Math.max(0, (load / gaugeMax) * 100));
+      const variance = getShapVariance(shap);
+      const confidence = getConfidence(variance, load);
+      console.log("=== PREDICTION DEBUG ===");
+      console.log("  load:", load);
+      console.log("  gaugePct:", gaugePct);
+      console.log("  variance:", variance);
+      console.log("  confidence:", confidence);
+    }
+  }, [result, shap]);
 
   if (!result && !loading) {
     return (
@@ -103,7 +233,7 @@ export default function PredictionPanel({
   const scenarioColor = SCENARIO_COLORS[scenario] || "#00d4ff";
   const variance = getShapVariance(shap);
   const confidence = getConfidence(variance, load);
-  const confMeta = CONFIDENCE_MAP[confidence];
+  const confMeta = CONFIDENCE_MAP[confidence] || CONFIDENCE_MAP["Low"];
   const drivers = getTopDrivers(shap);
 
   // Gauge: load % of max capacity (10 Gbps = 10000 Mbps per IMT-2030)
@@ -111,10 +241,7 @@ export default function PredictionPanel({
   const gaugePct = Math.min(100, Math.max(0, (load / gaugeMax) * 100));
   const severity = getGaugeSeverity(gaugePct);
 
-  // Gauge data for RadialBarChart
-  const gaugeData = [
-    { name: "load", value: gaugePct, fill: severity.color },
-  ];
+
 
   // Sparkline data
   const sparkData = (predictionHistory || []).map((p, i) => ({
@@ -165,37 +292,12 @@ export default function PredictionPanel({
             Predicted at {now} IST
           </div>
 
-          {/* ─── Semicircular Gauge ─── */}
-          <div className="gauge-container">
-            <ResponsiveContainer width="100%" height={140}>
-              <RadialBarChart
-                cx="50%"
-                cy="100%"
-                innerRadius="70%"
-                outerRadius="100%"
-                startAngle={180}
-                endAngle={0}
-                data={gaugeData}
-                barSize={14}
-              >
-                <RadialBar
-                  dataKey="value"
-                  cornerRadius={8}
-                  background={{ fill: "rgba(255,255,255,0.04)" }}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="gauge-labels">
-              <span>0%</span>
-              <span>100%</span>
-            </div>
-            <div
-              className="gauge-value-label"
-              style={{ color: severity.color }}
-            >
-              {severity.label} — {gaugePct.toFixed(0)}%
-            </div>
-          </div>
+          {/* ─── Semicircular Gauge (SVG) ─── */}
+          <SemiCircleGauge
+            percentage={gaugePct}
+            color={severity.color}
+            label={`${severity.label} — ${gaugePct.toFixed(1)}%`}
+          />
 
           {/* ─── Confidence Bar ─── */}
           <div className="confidence-bar">

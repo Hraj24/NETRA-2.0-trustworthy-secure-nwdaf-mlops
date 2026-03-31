@@ -1,5 +1,5 @@
 """
-Federated Learning Client for NETRA 1.0 - IMT-2030
+Federated Learning Client for NETRA 2.0 - IMT-2030
 
 Implements a Flower FL client that trains on domain-specific IMT-2030 data.
 Each client represents a network domain with specific usage scenarios:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # python -m src.fl_client --domain domain_a
     import argparse
 
-    parser = argparse.ArgumentParser(description="NETRA 1.0 FL Client")
+    parser = argparse.ArgumentParser(description="NETRA 2.0 FL Client")
     parser.add_argument("--domain", type=str, required=True,
                         help="Domain name (domain_a, domain_b, domain_c)")
     args = parser.parse_args()

@@ -1,4 +1,4 @@
-// NETRA 1.0 | IMT-2030 Compliant 6G NWDAF Dashboard
+// NETRA 2.0 | IMT-2030 Compliant 6G NWDAF Dashboard
 // Citation: ITU-R M.2160 / IMT-2030 Framework
 
 import React from "react";

@@ -1,5 +1,5 @@
 """
-NETRA 1.0 - IMT-2030 Compliant Data Pipeline
+NETRA 2.0 - IMT-2030 Compliant Data Pipeline
 =============================================
 
 This module generates synthetic 6G network traffic data aligned with:
@@ -840,7 +840,7 @@ def main():
         python -m src.data_pipeline --generate --samples 5000 --seed 42
     """
     parser = argparse.ArgumentParser(
-        description="NETRA 1.0 IMT-2030 Data Pipeline",
+        description="NETRA 2.0 IMT-2030 Data Pipeline",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -905,7 +905,7 @@ Examples:
 
     if args.generate:
         print("=" * 60)
-        print("NETRA 1.0 - IMT-2030 Data Generation")
+        print("NETRA 2.0 - IMT-2030 Data Generation")
         print("=" * 60)
         generate_all_datasets(
             n_samples=args.samples,
@@ -915,7 +915,7 @@ Examples:
 
     elif args.validate:
         print("=" * 60)
-        print("NETRA 1.0 - IMT-2030 Compliance Validation")
+        print("NETRA 2.0 - IMT-2030 Compliance Validation")
         print("=" * 60)
 
         try:
@@ -936,7 +936,7 @@ Examples:
 
     elif args.domains:
         print("=" * 60)
-        print("NETRA 1.0 - Domain Dataset Generation")
+        print("NETRA 2.0 - Domain Dataset Generation")
         print("=" * 60)
         generate_domain_datasets(
             n_samples=args.samples,

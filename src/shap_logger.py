@@ -1,5 +1,5 @@
 """
-SHAP Logger for NETRA 1.0 - IMT-2030
+SHAP Logger for NETRA 2.0 - IMT-2030
 
 Logs SHAP explanation values for audit and analysis.
 Updated for IMT-2030 schema with 12 features.

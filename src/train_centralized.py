@@ -1,5 +1,5 @@
 """
-Centralized Training Script for NETRA 1.0 - IMT-2030
+Centralized Training Script for NETRA 2.0 - IMT-2030
 
 Trains a baseline model using the IMT-2030 compliant dataset.
 This script serves as a reference implementation for the centralized
@@ -114,7 +114,7 @@ def train_and_eval(model_type="sgd"):
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("NETRA 1.0 - Centralized Training (IMT-2030)")
+    print("NETRA 2.0 - Centralized Training (IMT-2030)")
     print("=" * 60)
 
     # Train SGD model (for FL compatibility)

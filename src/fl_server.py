@@ -1,5 +1,5 @@
 """
-Federated Learning Server for NETRA 1.0 - IMT-2030
+Federated Learning Server for NETRA 2.0 - IMT-2030
 
 Implements a Flower FL server with custom FedAvg strategy that saves
 the global model after each aggregation round.
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     )
 
     print("=" * 60)
-    print("NETRA 1.0 - FL Server (IMT-2030)")
+    print("NETRA 2.0 - FL Server (IMT-2030)")
     print("=" * 60)
     print("Waiting for clients: domain_a, domain_b, domain_c")
     print("Model: SGDRegressor with 12 IMT-2030 features")

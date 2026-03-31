@@ -1,5 +1,5 @@
 """
-SHAP Explainability Module for NETRA 1.0 - IMT-2030
+SHAP Explainability Module for NETRA 2.0 - IMT-2030
 
 Generates SHAP-based explanations for IMT-2030 traffic predictions.
 Produces global summary plots and local bar charts for model interpretability.
@@ -142,7 +142,7 @@ def plot_local_bar(shap_values, X, feature_names, sample_idx=0, output_path="rep
 def main():
     """Main SHAP explanation pipeline."""
     print("=" * 60)
-    print("NETRA 1.0 - SHAP Explainability (IMT-2030)")
+    print("NETRA 2.0 - SHAP Explainability (IMT-2030)")
     print("=" * 60)
 
     # Generate SHAP values

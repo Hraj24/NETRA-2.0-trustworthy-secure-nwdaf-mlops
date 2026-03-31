@@ -36,7 +36,7 @@ app = FastAPI(
 )
 
 # CORS: read allowed origins from env (comma-separated), fallback to localhost
-_default_origins = "http://localhost:5173,http://localhost:3000"
+_default_origins = "http://localhost:5173,http://localhost:5174,http://localhost:3000"
 _cors_origins = os.getenv("CORS_ORIGINS", _default_origins)
 ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
 

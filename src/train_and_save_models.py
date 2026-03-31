@@ -1,5 +1,5 @@
 """
-Model Training and Serialization Script for NETRA 1.0 - IMT-2030
+Model Training and Serialization Script for NETRA 2.0 - IMT-2030
 
 Trains models on IMT-2030 compliant dataset and saves them for deployment.
 Creates both stable (v1) and intentionally degraded (v2) models for testing
@@ -112,7 +112,7 @@ def save_model(model, path, feature_names):
 def main():
     """Main training pipeline."""
     print("=" * 60)
-    print("NETRA 1.0 - Model Training & Serialization (IMT-2030)")
+    print("NETRA 2.0 - Model Training & Serialization (IMT-2030)")
     print("=" * 60)
 
     # Prepare data

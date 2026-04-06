@@ -22,3 +22,11 @@ export const driftLog = async () => {
     return [];
   }
 };
+
+export const checkAlerts = (data) =>
+  axios.post(`${API_BASE_URL}/alerts`, data);
+
+export const latencyStats = (scenario) =>
+  axios.get(`${API_BASE_URL}/latency`, {
+    params: scenario ? { scenario } : {},
+  });

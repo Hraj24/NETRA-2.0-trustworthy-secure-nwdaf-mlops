@@ -184,6 +184,7 @@ export default function PredictionPanel({
   loading,
   scenario,
   predictionHistory,
+  alerts,
 }) {
   const [prevLoad, setPrevLoad] = React.useState(0);
 
@@ -373,6 +374,39 @@ export default function PredictionPanel({
           {/* ─── Warning ─── */}
           {result.warning && (
             <div className="warning-text">{result.warning}</div>
+          )}
+
+          {/* ─── SLA Alerts ─── */}
+          {alerts && alerts.alerts && alerts.alerts.length > 0 && (
+            <div className="sla-alerts">
+              <div className="sla-alerts__title">
+                ⚠️ SLA Breach Predictions for {alerts.scenario}
+              </div>
+              {alerts.alerts.map((alert, idx) => (
+                <div
+                  key={idx}
+                  className={`sla-alert sla-alert--${alert.severity}`}
+                >
+                  <div className="sla-alert__icon">
+                    {alert.severity === "critical" ? "🚨" : "⚠️"}
+                  </div>
+                  <div className="sla-alert__content">
+                    <div className="sla-alert__message">{alert.message}</div>
+                    <div className="sla-alert__details">
+                      <span>Predicted: <strong>{alert.predicted_value.toFixed(4)}</strong></span>
+                      <span>Threshold: <strong>{alert.threshold}</strong></span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ─── No Alerts Badge ─── */}
+          {alerts && alerts.alerts && alerts.alerts.length === 0 && (
+            <div className="badge-no-alerts">
+              ✅ No SLA Breaches Predicted
+            </div>
           )}
         </>
       )}

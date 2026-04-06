@@ -2,7 +2,7 @@
 // Citation: ITU-R M.2160 / IMT-2030 Framework
 
 import React from "react";
-import { predict, explain, health } from "./api";
+import { predict, explain, health, checkAlerts, driftLog } from "./api";
 import "./App.css";
 
 import NavBar from "./components/NavBar";
@@ -11,6 +11,8 @@ import PredictionPanel from "./components/PredictionPanel";
 import ExplainPanel from "./components/ExplainPanel";
 import StatusPanel from "./components/StatusPanel";
 import RadarPanel from "./components/RadarPanel";
+import DriftHistoryChart from "./components/DriftHistoryChart";
+import LatencyHistogram from "./components/LatencyHistogram";
 
 import toast, { Toaster } from "react-hot-toast";
 
@@ -38,13 +40,19 @@ export default function App() {
   const [loading, setLoading] = React.useState(false);
   const [formData, setFormData] = React.useState(DEFAULT_FORM);
   const [predictionHistory, setPredictionHistory] = React.useState([]);
+  const [alerts, setAlerts] = React.useState(null);
+  const [driftHistory, setDriftHistory] = React.useState([]);
 
-  // Auto-refresh health every 10 seconds
+  // Auto-refresh health and drift log every 10 seconds
   React.useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const s = await health();
+        const [s, driftEvents] = await Promise.all([
+          health(),
+          driftLog()
+        ]);
         setStatus(s.data);
+        setDriftHistory(Array.isArray(driftEvents) ? driftEvents : []);
       } catch {
         // silently ignore
       }
@@ -81,7 +89,38 @@ export default function App() {
       setExplainData(e.data);
       setShap(e.data.shap_values);
 
-      // 3. Health refresh
+      // 3. Check SLA alerts
+      try {
+        const a = await checkAlerts(input);
+        setAlerts(a.data);
+        // Toast on SLA breach
+        if (a.data.alerts && a.data.alerts.length > 0) {
+          const criticalAlerts = a.data.alerts.filter(alert => alert.severity === "critical");
+          if (criticalAlerts.length > 0) {
+            toast.error(`⚠️ SLA Breach Predicted: ${criticalAlerts[0].message}`, {
+              duration: 6000,
+              style: {
+                background: "#151d35",
+                color: "#ef4444",
+                border: "1px solid #ef4444",
+              },
+            });
+          } else if (a.data.alerts.length > 0) {
+            toast.warning(`⚠️ SLA Warning: ${a.data.alerts[0].message}`, {
+              duration: 5000,
+              style: {
+                background: "#151d35",
+                color: "#f59e0b",
+                border: "1px solid #f59e0b",
+              },
+            });
+          }
+        }
+      } catch (alertErr) {
+        console.warn("Alerts check failed:", alertErr);
+      }
+
+      // 4. Health refresh
       const s = await health();
       setStatus(s.data);
 
@@ -145,6 +184,7 @@ export default function App() {
               loading={loading}
               scenario={formData.usage_scenario}
               predictionHistory={predictionHistory}
+              alerts={alerts}
             />
           </div>
 
@@ -165,6 +205,16 @@ export default function App() {
             formData={formData}
             scenario={formData.usage_scenario}
           />
+        </div>
+
+        {/* ─── Prediction Latency Histogram (full width) ─── */}
+        <div className="dashboard-full">
+          <LatencyHistogram scenario={formData.usage_scenario} />
+        </div>
+
+        {/* ─── Drift History Chart (full width) ─── */}
+        <div className="dashboard-full">
+          <DriftHistoryChart driftHistory={driftHistory} />
         </div>
       </main>
 

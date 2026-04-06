@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\Harsh\\\\.claude\\\\history\")",
+      "Read(//c/Users/Harsh/.claude/**)"
+    ]
+  }
+}

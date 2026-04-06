@@ -236,22 +236,6 @@ export default function InputForm({ onSubmit, onFormChange, loading }) {
         })}
       </div>
 
-      {/* Scenario Context Card */}
-      {meta && (
-        <div className="scenario-ctx">
-          <div
-            className="scenario-ctx__accent"
-            style={{ background: meta.color }}
-          />
-          <span className="scenario-ctx__icon">{meta.icon}</span>
-          <div className="scenario-ctx__body">
-            <div className="scenario-ctx__name">{meta.label}</div>
-            <div className="scenario-ctx__desc">{meta.desc}</div>
-            <span className="scenario-ctx__cite">ITU-R M.2160 §4</span>
-          </div>
-        </div>
-      )}
-
       {/* Run Analysis Button */}
       <button
         className="btn-analyze"
